@@ -20,7 +20,7 @@ jobs:
       with:
         dotnet-version: 3.1.x
     - name: Compile source
-      run: dotnet publish /src/AzureSignTool/AzureSignTool.csproj -c Release --self-contained -r win-x86 -o build-win-x86
+      run: dotnet publish src/AzureSignTool/AzureSignTool.csproj -c Release --self-contained -r win-x86 -o build-win-x86
     - name: Upload build as artifact
       uses: actions/upload-artifact@v3
       with:
