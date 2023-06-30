@@ -1,0 +1,40 @@
+name: Update AzureSignTool Submodule
+on:
+  schedule: [cron: 0 0 * * *]
+  workflow_dispatch:
+jobs:
+  update-openssl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+        fetch-depth: 0
+        token: ${{secrets.PUSH_TOKEN}}
+    - name: Configure git committer
+      uses: fregante/setup-git-user@v2
+    - name: Update AzureSignTool
+      run: |
+        cd AzureSignTool
+        currenttag=$(git describe --tags)
+        echo "Current version: $currenttag"
+        latesttag=$(git tag | grep -E '^v[0-9]\d*\.[0-9]\d*(\.[0-9]\d*)?$' | tail -n1)
+        echo "Latest version: $latesttag"
+        if [[ "$currenttag" != "$latesttag" ]]; then
+          echo "Updating repo..."
+          echo "- checking out latest tag in submodule"
+          git checkout "$latesttag"
+          cd ../
+          echo "- committing changes"
+          git commit -a -m "Update builds to $latesttag"
+          echo "- creating tag in build repo"
+          git tag "$latesttag"
+          echo "- pushing submodule update"
+          git push
+          echo "- pushing tag to build repo"
+          git push origin $latesttag
+        else
+          echo "Repo is up-to-date"
+        fi

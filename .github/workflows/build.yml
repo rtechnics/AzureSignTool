@@ -1,0 +1,53 @@
+name: Build
+on:
+  push:
+    tags:        
+      - '*'
+jobs:
+  build-win-x86:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ./AzureSignTool
+    steps:
+    - name: Clone AzureSignTool submodule
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 3.1.x
+    - name: Compile source
+      run: dotnet publish .\src\AzureSignTool\AzureSignTool.csproj -c Release --self-contained -r win-x86 -o build-win-x86
+    - name: Upload build as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: AzureSignTool-win-x86
+        path: AzureSignTool/build-win-x86
+  create-release:
+    permissions:
+      contents: write
+      packages: write
+    runs-on: ubuntu-latest
+    needs: [build-win-x86]
+    timeout-minutes: 30
+    steps:
+    - name: Clone build repo
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Get current version
+      id: version
+      run: echo "current=$(git describe --tags | cut -c 2-)" >> "$GITHUB_OUTPUT"
+    - name: Download all builds
+      uses: actions/download-artifact@v3
+    - name: Package AzureSignTool for release
+      run: |
+        zip -r AzureSignTool-${{ steps.version.outputs.current }}-win-x86.zip AzureSignTool-win-x86
+    - name: Create GitHub release with packages
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          AzureSignTool-${{ steps.version.outputs.current }}-win-x86.zip

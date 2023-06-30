@@ -1,0 +1,3 @@
+[submodule "AzureSignTool"]
+	path = AzureSignTool
+	url = https://github.com/vcsjones/AzureSignTool
